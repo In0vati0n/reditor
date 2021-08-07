@@ -28,4 +28,5 @@ add_executable(
 target_link_libraries(
     ${PROJ_NAME}
     lualib
+    rlib
 )

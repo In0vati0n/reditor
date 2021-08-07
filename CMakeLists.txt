@@ -39,5 +39,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # lua lib
 add_subdirectory(libs/lua)
 
+# rlib
+set(RLIB_BUILD_TESTS OFF)
+add_subdirectory(libs/rlib)
+
 add_subdirectory(src)
 add_subdirectory(test)

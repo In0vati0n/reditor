@@ -1,0 +1,3 @@
+[submodule "libs/rlib"]
+	path = libs/rlib
+	url = https://github.com/In0vati0n/rlib.git

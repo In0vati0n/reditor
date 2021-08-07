@@ -1,3 +1,10 @@
+/**
+ * REditor 主程序
+ *
+ * Author: In0vati0n
+ * Date: 2021/08/07
+ */
+
 /*** includes ***/
 
 #define _DEFAULT_SOURCE
@@ -20,6 +27,14 @@
 /*** lua include ***/
 
 #include "lua.h"
+
+/*** rlib include ***/
+
+#include "rlib.h"
+
+/*** other include ***/
+
+#include "buf.h"
 
 /*** defines ***/
 
@@ -1062,34 +1077,6 @@ void editorFind()
     }
 }
 
-/*** append buffer ***/
-
-/**
- * 动态字符串 buff
- */
-struct abuf
-{
-    char *b;
-    int len;
-};
-
-#define ABUF_INIT {NULL, 0}
-
-void abAppend(struct abuf *ab, const char *s, int len)
-{
-    char *new = realloc(ab->b, ab->len + len);
-
-    if (new == NULL) return;
-    memcpy(&new[ab->len], s, len);
-    ab->b = new;
-    ab->len += len;
-}
-
-void abFree(struct abuf *ab)
-{
-    free(ab->b);
-}
-
 /*** output ***/
 
 /**
@@ -1596,7 +1583,7 @@ int initLua()
     luaL_openlibs(L);
 
     int ret = luaL_dostring(L, "print('hello lua')");
-    printf("call lua ret: %d", ret);
+    RLOG_DEBUG("call lua ret: %d", ret);
 }
 
 int main(int argc, char *argv[])
