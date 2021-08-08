@@ -150,4 +150,35 @@ struct editorConfig
  */
 extern struct editorConfig E;
 
+/**
+ * 将数据列转换成渲染列
+ */
+int editorRowCxToRx(erow *row, int cx);
+
+/**
+ * 将渲染列转换成数据列
+ */
+int editorRowRxToCx(erow *row, int rx);
+
+/**
+ * 根据数据更新渲染值
+ * 将其中 nonprintable 字符替换成可读字符
+ */
+void editorUpdateRow(erow *row);
+
+/**
+ * 向行数据中插入一个字符
+ */
+void editorRowInsertChar(erow *row, int at, int c);
+
+/**
+ * 在一行拼接插入一个字符串
+ */
+void editorRowAppendString(erow *row, char *s, size_t len);
+
+/**
+ * 从数据行中删除一个字符
+ */
+void editorRowDelChar(erow *row, int at);
+
 #endif // __RE_CONFIG__

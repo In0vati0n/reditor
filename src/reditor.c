@@ -23,6 +23,7 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 /*** lua include ***/
 
@@ -40,24 +41,21 @@
 
 /*** filetypes ***/
 
-char *C_HL_extensions[] = { ".c", ".h", ".cpp", NULL };
+char *C_HL_extensions[] = {".c", ".h", ".cpp", NULL};
 
 char *C_HL_keywords[] = {
     "switch", "if", "while", "for", "break", "continue",
     "return", "else", "struct", "union", "typedef",
     "static", "enum", "class", "case", "int|", "long|",
     "double|", "float|", "char|", "unsigned|", "signed|",
-    "void|", NULL
-};
+    "void|", NULL};
 
 struct editorSyntax HLDB[] = {
-    {
-        "c",
-        C_HL_extensions,
-        C_HL_keywords,
-        "//", "/*", "*/",
-        HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS
-    },
+    {"c",
+     C_HL_extensions,
+     C_HL_keywords,
+     "//", "/*", "*/",
+     HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS},
 };
 
 #define HLDB_ENTRIES (sizeof(HLDB) / sizeof(HLDB[0]))
@@ -67,6 +65,7 @@ struct editorSyntax HLDB[] = {
 void editorSetStatusMessage(const char *fmt, ...);
 void editorRefreshScreen();
 char *editorPrompt(char *prompt, void (*callback)(char *, int));
+int call_lua(const char *func_name);
 
 /*** terminal ***/
 
@@ -78,7 +77,7 @@ void die(const char *s)
     // 程序退出时清理屏幕
     write(STDOUT_FILENO, "\x1b[2J", 4);
     write(STDOUT_FILENO, "\x1b[H", 3);
-    
+
     perror(s);
     exit(1);
 }
@@ -183,8 +182,10 @@ int editorReadKey()
     {
         char seq[3];
 
-        if (read(STDIN_FILENO, &seq[0], 1) != 1) return '\x1b';
-        if (read(STDIN_FILENO, &seq[1], 1) != 1) return '\x1b';
+        if (read(STDIN_FILENO, &seq[0], 1) != 1)
+            return '\x1b';
+        if (read(STDIN_FILENO, &seq[1], 1) != 1)
+            return '\x1b';
 
         if (seq[0] == '[')
         {
@@ -198,13 +199,20 @@ int editorReadKey()
                 {
                     switch (seq[1])
                     {
-                    case '1': return HOME_KEY;
-                    case '3': return DEL_KEY;
-                    case '4': return END_KEY;
-                    case '5': return PAGE_UP;
-                    case '6': return PAGE_DOWN;
-                    case '7': return HOME_KEY;
-                    case '8': return END_KEY;
+                    case '1':
+                        return HOME_KEY;
+                    case '3':
+                        return DEL_KEY;
+                    case '4':
+                        return END_KEY;
+                    case '5':
+                        return PAGE_UP;
+                    case '6':
+                        return PAGE_DOWN;
+                    case '7':
+                        return HOME_KEY;
+                    case '8':
+                        return END_KEY;
                     }
                 }
             }
@@ -212,26 +220,36 @@ int editorReadKey()
             {
                 switch (seq[1])
                 {
-                case 'A': return ARROW_UP;
-                case 'B': return ARROW_DOWN;
-                case 'C': return ARROW_RIGHT;
-                case 'D': return ARROW_LEFT;
-                case 'H': return HOME_KEY;
-                case 'F': return END_KEY;
+                case 'A':
+                    return ARROW_UP;
+                case 'B':
+                    return ARROW_DOWN;
+                case 'C':
+                    return ARROW_RIGHT;
+                case 'D':
+                    return ARROW_LEFT;
+                case 'H':
+                    return HOME_KEY;
+                case 'F':
+                    return END_KEY;
                 }
             }
-        } else if (seq[0] == 'O') {
+        }
+        else if (seq[0] == 'O')
+        {
             switch (seq[1])
             {
-            case 'H': return HOME_KEY;
-            case 'F': return END_KEY;
+            case 'H':
+                return HOME_KEY;
+            case 'F':
+                return END_KEY;
             }
         }
 
         return '\x1b';
     }
     else
-    {        
+    {
         return c;
     }
 }
@@ -257,18 +275,22 @@ int getCursorPosition(/* out */ int *rows, /* out */ int *cols)
 
     while (i < sizeof(buf) - 1)
     {
-        if (read(STDIN_FILENO, &buf[i], 1) != 1) break;
+        if (read(STDIN_FILENO, &buf[i], 1) != 1)
+            break;
         // 判断输入是否结束
-        if (buf[i] == 'R') break;
+        if (buf[i] == 'R')
+            break;
         i++;
     }
     buf[i] = '\0';
 
     // 检查是否有错误
-    if (buf[0] != '\x1b' || buf[1] != '[') return -1;
+    if (buf[0] != '\x1b' || buf[1] != '[')
+        return -1;
 
     // 读取行、列数据
-    if (sscanf(&buf[2], "%d;%d", rows, cols) != 2) return -1;
+    if (sscanf(&buf[2], "%d;%d", rows, cols) != 2)
+        return -1;
 
     return 0;
 }
@@ -312,8 +334,7 @@ int getWindowSize(/* out */ int *rows, /* out */ int *cols)
 
 int is_separator(int c)
 {
-    return isspace(c) || c == '\0'
-        || strchr(",.()+-/*=~%<>[];", c) != NULL;
+    return isspace(c) || c == '\0' || strchr(",.()+-/*=~%<>[];", c) != NULL;
 }
 
 void editorUpdateSyntax(erow *row)
@@ -321,7 +342,8 @@ void editorUpdateSyntax(erow *row)
     row->hl = realloc(row->hl, row->rsize);
     memset(row->hl, HL_NORMAL, row->rsize);
 
-    if (E.syntax == NULL) return;
+    if (E.syntax == NULL)
+        return;
 
     char **keywords = E.syntax->keywords;
 
@@ -342,8 +364,8 @@ void editorUpdateSyntax(erow *row)
     {
         char c = row->render[i];
         unsigned char prev_hl = (i > 0)
-            ? row->hl[i - 1]
-            : HL_NORMAL;
+                                    ? row->hl[i - 1]
+                                    : HL_NORMAL;
 
         if (scs_len && !in_string && !in_comment)
         {
@@ -395,7 +417,8 @@ void editorUpdateSyntax(erow *row)
                     i += 2;
                     continue;
                 }
-                if (c == in_string) in_string = 0;
+                if (c == in_string)
+                    in_string = 0;
                 i++;
                 prev_sep = 1;
                 continue;
@@ -414,8 +437,7 @@ void editorUpdateSyntax(erow *row)
 
         if (E.syntax->flags & HL_HIGHLIGHT_NUMBERS)
         {
-            if ((isdigit(c) && (prev_sep || prev_hl == HL_NUMBER))
-                || (c == '.' && prev_hl == HL_NUMBER))
+            if ((isdigit(c) && (prev_sep || prev_hl == HL_NUMBER)) || (c == '.' && prev_hl == HL_NUMBER))
             {
                 row->hl[i] = HL_NUMBER;
                 i++;
@@ -431,12 +453,13 @@ void editorUpdateSyntax(erow *row)
             {
                 int klen = strlen(keywords[j]);
                 int kw2 = keywords[j][klen - 1] == '|';
-                if (kw2) klen--;
+                if (kw2)
+                    klen--;
 
                 if (!strncmp(&row->render[i],
                              keywords[j],
-                             klen)
-                    && is_separator(row->render[i + klen]))
+                             klen) &&
+                    is_separator(row->render[i + klen]))
                 {
                     memset(&row->hl[i],
                            kw2 ? HL_KEYWORD2 : HL_KEYWORD1,
@@ -468,20 +491,28 @@ int editorSyntaxToColor(int hl)
     switch (hl)
     {
     case HL_COMMENT:
-    case HL_MLCOMMENT:return 36;
-    case HL_KEYWORD1: return 33;
-    case HL_KEYWORD2: return 32;
-    case HL_STRING: return 35;
-    case HL_NUMBER: return 31;
-    case HL_MATCH: return 34;
-    default: return 37;
+    case HL_MLCOMMENT:
+        return 36;
+    case HL_KEYWORD1:
+        return 33;
+    case HL_KEYWORD2:
+        return 32;
+    case HL_STRING:
+        return 35;
+    case HL_NUMBER:
+        return 31;
+    case HL_MATCH:
+        return 34;
+    default:
+        return 37;
     }
 }
 
 void editorSelectSyntaxHighlight()
 {
     E.syntax = NULL;
-    if (E.filename == NULL) return;
+    if (E.filename == NULL)
+        return;
 
     char *ext = strrchr(E.filename, '.');
 
@@ -492,8 +523,7 @@ void editorSelectSyntaxHighlight()
         while (s->filematch[i])
         {
             int is_ext = (s->filematch[i][0] == '.');
-            if ((is_ext && ext && !strcmp(ext, s->filematch[i]))
-                || (!is_ext && strstr(E.filename, s->filematch[i])))
+            if ((is_ext && ext && !strcmp(ext, s->filematch[i])) || (!is_ext && strstr(E.filename, s->filematch[i])))
             {
                 E.syntax = s;
 
@@ -502,7 +532,7 @@ void editorSelectSyntaxHighlight()
                 {
                     editorUpdateSyntax(&E.row[filerow]);
                 }
-                
+
                 return;
             }
 
@@ -511,86 +541,16 @@ void editorSelectSyntaxHighlight()
     }
 }
 
-/*** row operations ***/
-
-/**
- * 将数据列转换成渲染列
- */
-int editorRowCxToRx(erow *row, int cx)
-{
-    int rx = 0;
-    int j;
-    for (j = 0; j < cx; j++)
-    {
-        if (row->chars[j] == '\t')
-            rx += (RE_TAB_STOP - 1) - (rx % RE_TAB_STOP);
-        rx++;
-    }
-
-    return rx;
-}
-
-/**
- * 将渲染列转换成数据列
- */
-int editorRowRxToCx(erow *row, int rx)
-{
-    int cur_rx = 0;
-    int cx;
-    for (cx = 0; cx < row->size; cx++)
-    {
-        if (row->chars[cx] == '\t')
-            cur_rx += (RE_TAB_STOP - 1)
-                - (cur_rx % RE_TAB_STOP);
-        cur_rx++;
-
-        if (cur_rx > rx) return cx;
-    }
-
-    return cx;
-}
-
-/**
- * 根据数据更新渲染值
- * 将其中 nonprintable 字符替换成可读字符
- */
-void editorUpdateRow(erow *row)
-{
-    int tabs = 0;
-    int j;
-    for (j = 0; j < row->size; j++)
-        if (row->chars[j] == '\t') tabs++;
-    
-    free(row->render);
-    row->render = malloc(row->size + tabs * (RE_TAB_STOP - 1) + 1);
-
-    int idx = 0;
-    for (j = 0; j < row->size; j++)
-    {
-        if (row->chars[j] == '\t')
-        {
-            row->render[idx++] = ' ';
-            while (idx % RE_TAB_STOP != 0) row->render[idx++] = ' ';
-        }
-        else
-        {
-            row->render[idx++] = row->chars[j];
-        }
-    }
-
-    row->render[idx] = '\0';
-    row->rsize = idx;
-
-    editorUpdateSyntax(row);
-}
+/*** editor operations ***/
 
 /**
  * 向编辑器数据中添加一行
  */
 void editorInsertRow(int at, char *s, size_t len)
 {
-    if (at < 0 || at > E.numrows) return;
-    
+    if (at < 0 || at > E.numrows)
+        return;
+
     E.row = realloc(E.row, sizeof(erow) * (E.numrows + 1));
     memmove(&E.row[at + 1], &E.row[at],
             sizeof(erow) * (E.numrows - at));
@@ -609,7 +569,7 @@ void editorInsertRow(int at, char *s, size_t len)
     E.row[at].hl = NULL;
     E.row[at].hl_open_comment = 0;
     editorUpdateRow(&E.row[at]);
-    
+
     E.numrows++;
     E.dirty++;
 }
@@ -629,9 +589,10 @@ void editorFreeRow(erow *row)
  */
 void editorDelRow(int at)
 {
-    if (at < 0 || at > E.numrows) return;
+    if (at < 0 || at > E.numrows)
+        return;
     editorFreeRow(&E.row[at]);
-    memmove(&E.row[at], &E.row[at + 1], sizeof(erow) * (E.numrows - at -1));
+    memmove(&E.row[at], &E.row[at + 1], sizeof(erow) * (E.numrows - at - 1));
     for (int j = at; j < E.numrows - 1; j++)
         E.row[j].idx--;
     E.numrows--;
@@ -639,54 +600,12 @@ void editorDelRow(int at)
 }
 
 /**
- * 向行数据中插入一个字符
- */
-void editorRowInsertChar(erow *row, int at, int c)
-{
-    if (at < 0 || at > row->size) at = row->size;
-    row->chars = realloc(row->chars, row->size + 2);
-    memmove(&row->chars[at + 1],
-            &row->chars[at],
-            row->size - at + 1);
-    row->size++;
-    row->chars[at] = c;
-    editorUpdateRow(row);
-    E.dirty++;
-}
-
-/**
- * 在一行拼接插入一个字符串
- */
-void editorRowAppendString(erow *row, char *s, size_t len)
-{
-    row->chars = realloc(row->chars, row->size + len + 1);
-    memcpy(&row->chars[row->size], s, len);
-    row->size += len;
-    row->chars[row->size] = '\0';
-    editorUpdateRow(row);
-    E.dirty++;
-}
-
-/**
- * 从数据行中删除一个字符
- */
-void editorRowDelChar(erow *row, int at)
-{
-    if (at < 0 || at >= row->size) return;
-    memmove(&row->chars[at], &row->chars[at + 1], row->size - at);
-    row->size--;
-    editorUpdateRow(row);
-    E.dirty++;
-}    
-
-/*** editor operations ***/
-
-/**
  * 向编辑器中插入一个字符
  */
 void editorInsertChar(int c)
 {
-    if (E.cy == E.numrows) {
+    if (E.cy == E.numrows)
+    {
         editorInsertRow(E.numrows, "", 0);
     }
     editorRowInsertChar(&E.row[E.cy], E.cx, c);
@@ -723,8 +642,10 @@ void editorInsertNewline()
  */
 void editorDelChar()
 {
-    if (E.cy == E.numrows) return;
-    if (E.cx == 0 && E.cy == 0) return;
+    if (E.cy == E.numrows)
+        return;
+    if (E.cx == 0 && E.cy == 0)
+        return;
 
     erow *row = &E.row[E.cy];
     if (E.cx > 0)
@@ -740,7 +661,7 @@ void editorDelChar()
                               row->size);
         editorDelRow(E.cy);
         E.cy--;
-    }    
+    }
 }
 
 /*** file i/o ***/
@@ -778,9 +699,10 @@ void editorOpen(char *filename)
     E.filename = strdup(filename);
 
     editorSelectSyntaxHighlight();
-    
+
     FILE *fp = fopen(filename, "r");
-    if (!fp) die("fopen");
+    if (!fp)
+        die("fopen");
 
     char *line = NULL;
     size_t linecap = 0;
@@ -859,7 +781,7 @@ void editorFindCallback(char *query, int key)
         free(saved_hl);
         saved_hl = NULL;
     }
-    
+
     if (key == '\r' || key == '\x1b')
     {
         last_match = -1;
@@ -880,14 +802,17 @@ void editorFindCallback(char *query, int key)
         direction = 1;
     }
 
-    if (last_match == -1) direction = 1;
+    if (last_match == -1)
+        direction = 1;
     int current = last_match;
     int i;
     for (i = 0; i < E.numrows; i++)
     {
         current += direction;
-        if (current == -1) current = E.numrows - 1;
-        else if (current == E.numrows) current = 0;
+        if (current == -1)
+            current = E.numrows - 1;
+        else if (current == E.numrows)
+            current = 0;
 
         erow *row = &E.row[current];
         char *match = strstr(row->render, query);
@@ -918,7 +843,7 @@ void editorFind()
     int saved_cy = E.cy;
     int saved_coloff = E.coloff;
     int saved_rowoff = E.rowoff;
-    
+
     char *query = editorPrompt("Search: %s"
                                " (Use ESC/Arrows/Enter)",
                                editorFindCallback);
@@ -946,7 +871,7 @@ void editorScroll()
     E.rx = 0;
     if (E.cy < E.numrows)
         E.rx = editorRowCxToRx(&E.row[E.cy], E.cx);
-    
+
     if (E.cy < E.rowoff)
         E.rowoff = E.cy;
 
@@ -966,7 +891,7 @@ void editorScroll()
 void editorRefreshScreen()
 {
     editorScroll();
-    
+
     struct abuf ab = ABUF_INIT;
 
     /**
@@ -974,7 +899,7 @@ void editorRefreshScreen()
      * 参看：http://vt100.net/docs/vt100-ug/chapter3.html#SM
      */
     abAppend(&ab, "\x1b[?25l", 6);
-    
+
     /**
      * 4 bytes to write
      * - \x1b: escape character 转义字符（也可以写成数字 27)
@@ -1020,7 +945,6 @@ void editorRefreshScreen()
      */
     abAppend(&ab, "\x1b[?25h", 6);
 
-
     // 将缓冲区内容写入终端
     write(STDOUT_FILENO, ab.b, ab.len);
 
@@ -1058,8 +982,7 @@ char *editorPrompt(char *prompt, void (*callback)(char *, int))
         editorRefreshScreen();
 
         int c = editorReadKey();
-        if (c == DEL_KEY || c == CTRL_KEY('h')
-            || c == BACKSPACE)
+        if (c == DEL_KEY || c == CTRL_KEY('h') || c == BACKSPACE)
         {
             if (buflen != 0)
                 buf[--buflen] = '\0';
@@ -1067,7 +990,8 @@ char *editorPrompt(char *prompt, void (*callback)(char *, int))
         else if (c == '\x1b')
         {
             editorSetStatusMessage("");
-            if (callback) callback(buf, c);
+            if (callback)
+                callback(buf, c);
             free(buf);
             return NULL;
         }
@@ -1076,7 +1000,8 @@ char *editorPrompt(char *prompt, void (*callback)(char *, int))
             if (buflen != 0)
             {
                 editorSetStatusMessage("");
-                if (callback) callback(buf, c);
+                if (callback)
+                    callback(buf, c);
                 return buf;
             }
         }
@@ -1092,7 +1017,8 @@ char *editorPrompt(char *prompt, void (*callback)(char *, int))
             buf[buflen] = '\0';
         }
 
-        if (callback) callback(buf, c);
+        if (callback)
+            callback(buf, c);
     }
 }
 
@@ -1102,7 +1028,7 @@ char *editorPrompt(char *prompt, void (*callback)(char *, int))
 void editorMoveCursor(int key)
 {
     erow *row = (E.cy >= E.numrows) ? NULL : &E.row[E.cy];
-    
+
     switch (key)
     {
     case ARROW_LEFT:
@@ -1153,7 +1079,7 @@ void editorMoveCursor(int key)
 void editorProcessKeypress()
 {
     static int quit_times = RE_QUIT_TIMES;
-    
+
     int c = editorReadKey();
 
     switch (c)
@@ -1161,7 +1087,7 @@ void editorProcessKeypress()
     case '\r':
         editorInsertNewline();
         break;
-           
+
     case CTRL_KEY('q'):
     {
         if (E.dirty && quit_times > 0)
@@ -1172,7 +1098,7 @@ void editorProcessKeypress()
             quit_times--;
             return;
         }
-        
+
         // 程序退出时清理屏幕
         write(STDOUT_FILENO, "\x1b[2J", 4);
         write(STDOUT_FILENO, "\x1b[H", 3);
@@ -1201,7 +1127,8 @@ void editorProcessKeypress()
     case BACKSPACE:
     case CTRL_KEY('h'):
     case DEL_KEY:
-        if (c == DEL_KEY) editorMoveCursor(ARROW_RIGHT);
+        if (c == DEL_KEY)
+            editorMoveCursor(ARROW_RIGHT);
         editorDelChar();
         break;
 
@@ -1215,9 +1142,10 @@ void editorProcessKeypress()
         else if (c == PAGE_DOWN)
         {
             E.cy = E.rowoff + E.screenrows - 1;
-            if (E.cy > E.numrows) E.cy = E.numrows;
+            if (E.cy > E.numrows)
+                E.cy = E.numrows;
         }
-        
+
         int times = E.screenrows;
         while (times--)
             editorMoveCursor(c == PAGE_UP ? ARROW_UP : ARROW_DOWN);
@@ -1272,7 +1200,23 @@ void initEditor()
     E.screenrows -= 2;
 }
 
+/*** lua ***/
+
 static lua_State *L;
+
+int lua_getWorkDir(lua_State *L)
+{
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) != NULL)
+    {
+        lua_pushstring(L, cwd);
+        return 1;
+    }
+    else
+    {
+        die("getcwd");
+    }
+}
 
 /**
  * 初始化 Lua
@@ -1283,14 +1227,55 @@ int initLua()
 
     luaL_openlibs(L);
 
-    int ret = luaL_dostring(L, "print('hello lua')");
-    RLOG_DEBUG("call lua ret: %d", ret);
+    // 设置 __getWorkDir
+    lua_pushcfunction(L, lua_getWorkDir);
+    lua_setglobal(L, "__getWorkDir");
+
+    // load boot.lua
+    int ret = luaL_dostring(L, "require('scripts.boot')");
+    if (ret)
+    {
+        RLOG_ERROR("Load boot.lua error: %s", lua_tostring(L, -1));
+        die("initLua");
+    }
+
+    return 0;
+}
+
+int traceback(lua_State *L)
+{
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_pushvalue(L, 1);
+    lua_pushinteger(L, 2);
+    lua_call(L, 2, 1);
+    return 1;
+}
+
+int call_lua(const char *func_name)
+{
+    lua_pushcfunction(L, traceback);
+    lua_getglobal(L, func_name);
+
+    int ret = lua_pcall(L, 0, 0, lua_gettop(L) - 1);
+    if (ret != 0)
+    {
+        const char *error = lua_tostring(L, -1);
+
+        RLOG_ERROR("Call lua error: %s", error);
+
+        lua_getglobal(L, "log_error");
+        lua_pushstring(L, error);
+        lua_pcall(L, 1, 0, 0);
+    }
+
+    return ret;
 }
 
 int main(int argc, char *argv[])
 {
     initLua();
-    
+
     enableRawMode();
     initEditor();
     if (argc >= 2)

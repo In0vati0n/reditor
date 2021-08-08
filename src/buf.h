@@ -19,9 +19,15 @@ struct abuf
 
 #define ABUF_INIT {NULL, 0}
 
+/**
+ * 动态添加一些内容
+ */
 void abAppend(struct abuf *ab,
               const char *s, int len);
 
+/**
+ * 释放内存
+ */
 void abFree(struct abuf *ab);
 
 #endif // __RE_BUF_H__
