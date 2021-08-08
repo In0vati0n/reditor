@@ -2,8 +2,7 @@ aux_source_directory(. SRC_FILES)
 
 project(${PROJ_NAME})
 
-file(GLOB HEADERS_PLUS "${PROJECT_SOURCE_DIR}/include/*.hpp")
-file(GLOB HEADERS "${PROJECT_SOURCE_DIR}/include/*.h")
+file(GLOB HEADERS "${PROJECT_SOURCE_DIR}/*.h")
 
 source_group("Headers" FILES ${HEADERS_PLUS})
 source_group("Headers" FILES ${HEADERS})
@@ -21,7 +20,6 @@ endif (WIN32)
 add_executable(
     ${PROJ_NAME}
     ${SRC_FILES}
-    ${HEADERS_PLUS}
     ${HEADERS}
 )
 

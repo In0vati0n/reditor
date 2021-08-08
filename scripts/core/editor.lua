@@ -108,13 +108,6 @@ function Editor:deactiveBuffer(buffer)
     return true
 end
 
-function Editor:render()
-    ---@param buffer Buffer
-    for i, buffer in self.showBufferArr:iparis() do
-        buffer:draw()
-    end
-end
-
 ---@private
 function Editor:_fileId()
     self.fileId = self.fileId + 1

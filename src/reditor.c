@@ -35,9 +35,12 @@
 
 /*** other include ***/
 
+#include "common.h"
 #include "config.h"
 #include "buf.h"
 #include "render.h"
+
+#include "terminal_render.h"
 
 /*** filetypes ***/
 
@@ -1243,9 +1246,9 @@ int initLua(int argc, char *argv[])
     luaL_openlibs(L);
 
     lua_newtable(L);
-    lua_setglobal(L, "reditor");
+    lua_setglobal(L, RE_LUA_GLOBAL_NAME);
 
-    lua_getglobal(L, "reditor");
+    lua_getglobal(L, RE_LUA_GLOBAL_NAME);
 
     // 设置各种辅助函数
     lua_pushcfunction(L, lua_getWorkDir);
@@ -1267,6 +1270,9 @@ int initLua(int argc, char *argv[])
     lua_setfield(L, -2, "argv");
 
     lua_pop(L, 1); // pop reditor table
+
+    // 初始化终端渲染库
+    initTerminalRenderLib(L);
 
     return 0;
 }

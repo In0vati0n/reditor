@@ -48,7 +48,4 @@ function Buffer:onDeactive()
     self.isActive = false
 end
 
-function Buffer:draw()
-end
-
 return Buffer
