@@ -11,6 +11,8 @@
 #include <string.h>
 #include <ctype.h>
 
+int editorSyntaxToColor(int hl);
+
 /**
  * 绘制每行 ~ 提示符
  */
