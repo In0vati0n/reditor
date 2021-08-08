@@ -65,7 +65,7 @@ struct editorSyntax HLDB[] = {
 void editorSetStatusMessage(const char *fmt, ...);
 void editorRefreshScreen();
 char *editorPrompt(char *prompt, void (*callback)(char *, int));
-int call_lua(const char *func_name);
+int callLua(const char *func_name);
 
 /*** terminal ***/
 
@@ -1216,6 +1216,20 @@ int lua_getWorkDir(lua_State *L)
     {
         die("getcwd");
     }
+
+    return 0;
+}
+
+int lua_editorRefreshScreen(lua_State *L)
+{
+    editorRefreshScreen();
+    return 0;
+}
+
+int lua_editorProcessKeypress(lua_State *L)
+{
+    editorProcessKeypress();
+    return 0;
 }
 
 /**
@@ -1228,16 +1242,21 @@ int initLua()
     luaL_openlibs(L);
 
     // 设置 __getWorkDir
-    lua_pushcfunction(L, lua_getWorkDir);
-    lua_setglobal(L, "__getWorkDir");
+    lua_newtable(L);
+    lua_setglobal(L, "reditor");
 
-    // load boot.lua
-    int ret = luaL_dostring(L, "require('scripts.boot')");
-    if (ret)
-    {
-        RLOG_ERROR("Load boot.lua error: %s", lua_tostring(L, -1));
-        die("initLua");
-    }
+    lua_getglobal(L, "reditor");
+
+    lua_pushcfunction(L, lua_getWorkDir);
+    lua_setfield(L, -2, "getWorkDir");
+
+    lua_pushcfunction(L, lua_editorRefreshScreen);
+    lua_setfield(L, -2, "refreshScreen");
+
+    lua_pushcfunction(L, lua_editorProcessKeypress);
+    lua_setfield(L, -2, "processKeypress");
+
+    lua_pop(L, 1);
 
     return 0;
 }
@@ -1252,7 +1271,7 @@ int traceback(lua_State *L)
     return 1;
 }
 
-int call_lua(const char *func_name)
+int callLua(const char *func_name)
 {
     lua_pushcfunction(L, traceback);
     lua_getglobal(L, func_name);
@@ -1272,24 +1291,68 @@ int call_lua(const char *func_name)
     return ret;
 }
 
+int luaxResume(lua_State *L, int nargs, int *nres)
+{
+#if LUA_VERSION_NUM >= 504
+    return lua_resume(L, NULL, nargs, nres);
+#elif LUA_VERSION_NUM >= 502
+    return lua_resume(L, NULL, nargs);
+#else
+    return lua_resume(L, nargs);
+#endif
+}
+
+int luaMainLoop()
+{
+    // 加载 boot.lua，返回一个协程
+    lua_getglobal(L, "require");
+    lua_pushstring(L, "scripts.boot");
+    lua_call(L, 1, 1);
+
+    // 主循环
+    lua_newthread(L);
+    lua_pushvalue(L, -2); // boot return value
+    int stackpos = lua_gettop(L);
+    int nres;
+
+    while (luaxResume(L, 0, &nres) == LUA_YIELD)
+    {
+#if LUA_VERSION_NUM >= 504
+        lua_pop(L, nres);
+#else
+        lua_pop(L, lua_gettop(L) - stackpos);
+#endif
+    }
+
+    if (lua_isnumber(L, -1))
+        return (int)lua_tonumber(L, -1);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
-    initLua();
-
     enableRawMode();
     initEditor();
+
+    // 初始化 lua
+    initLua();
+
     if (argc >= 2)
-    {
         editorOpen(argv[1]);
-    }
 
     editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find");
 
-    while (1)
-    {
-        editorRefreshScreen();
-        editorProcessKeypress();
-    }
+    // 主循环
+    int ret = luaMainLoop();
 
-    return 0;
+    lua_close(L);
+
+    // while (1)
+    // {
+    //     editorRefreshScreen();
+    //     editorProcessKeypress();
+    // }
+
+    return ret;
 }
