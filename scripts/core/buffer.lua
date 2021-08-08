@@ -4,21 +4,13 @@
     @Author In0vati0n
     @Date 2021/08/08
 --]]
-
 ---@class Buffer
-local Buffer = Class('Buffer')
+local Buffer = Class("Buffer")
 
 ---@param id number
 ---@param file File
 function Buffer:init(id, file)
     self.id = id
-    self.cx = 0
-    self.cy = 0
-    self.rx = 0
-    self.screenRows = 0
-    self.screenCols = 0
-    self.rowOff = 0
-    self.colOff = 0
 
     self.file = file
 

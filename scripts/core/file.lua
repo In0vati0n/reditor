@@ -30,9 +30,8 @@ end
 ---@private
 ---@return boolean
 function File:_openFile()
-    if PathUtils.fileExists(path) then
-        local lines = io.lines(self.path)
-        for i, line in ipairs(lines) do
+    if PathUtils.fileExists(self.path) then
+        for line in io.lines(self.path) do
             self.rows:add(Row:new(line))
         end
         return true

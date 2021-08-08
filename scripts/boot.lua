@@ -18,16 +18,16 @@ package.path = package.path .. WORK_DIR .. [[/?.lua;]]
 package.path = package.path .. WORK_DIR .. [[/scripts/?.lua;]]
 
 ---@class Class
-_G.Class = require('libs.class.30log')
+_G.Class = require("libs.class.30log")
 ---@class Array
-_G.Array = require('libs.array.array')
+_G.Array = require("libs.array.array")
 
 function logError(...)
-    logErrorF('%s', table.concat({...}, ' '))
+    logErrorF("%s", table.concat({...}, " "))
 end
 
 function logErrorF(f, ...)
-    print('Lua Error: ' .. string.format(f, ...))
+    print("Lua Error: " .. string.format(f, ...) .. "\n" .. debug.traceback())
 end
 
 --------------------------------------------
@@ -36,7 +36,7 @@ end
 
 --endregion
 
-require('main')
+require("main")
 
 return function()
     local func

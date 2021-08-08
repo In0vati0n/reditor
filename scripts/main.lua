@@ -8,7 +8,7 @@
 local ArgParser = require("libs.argparse.src.argparse")
 local PathUtils = require("utils.path_utils")
 local Editor = require("core.editor")
-local TerminalWindow = require("view.terminal_window")
+local TerminalWindow = require("view.terminal.window")
 
 ---@type Editor
 local editor = Editor()
@@ -17,20 +17,8 @@ local editor = Editor()
 local windows = Array()
 
 ---渲染线程
----@type thread
-local renderThread =
-    coroutine.create(
-    function()
-        while true do
-            ---@param win Window
-            for i, win in windows:iparis() do
-                win:update()
-            end
-
-            coroutine.yield()
-        end
-    end
-)
+---@type Array
+local renderThreads = Array()
 
 function onLoad(argv)
     local parser = ArgParser("reditor")
@@ -51,11 +39,25 @@ function onLoad(argv)
     editor:showBuffer(buffer)
     editor:activeBuffer(buffer)
 
-    windows:add(TerminalWindow(editor))
+    local tw = TerminalWindow(editor)
+    windows:add(tw)
+
+    renderThreads:add(
+        coroutine.create(
+            function()
+                while true do
+                    tw:onUpdate()
+                    coroutine.yield()
+                end
+            end
+        )
+    )
 
     return status
 end
 
 function onUpdate()
-    coroutine.resume(renderThread)
+    for i, thread in renderThreads:iparis() do
+        coroutine.resume(thread)
+    end
 end

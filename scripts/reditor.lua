@@ -4,6 +4,7 @@
     @Author In0vati0n
     @Date 2021/08/08
 --]]
+---@class _c_reditor
 reditor = {}
 
 ---得到当前工作目录
@@ -22,3 +23,16 @@ end
 ---程序启动参数
 ---@type string[]
 reditor.argv = {}
+
+---@type _c_terminal_render
+reditor.terminal_render = {}
+
+---@class _c_terminal_render
+tr = {}
+---@param s string
+function tr.draw(s)
+end
+
+---@return number, number
+function tr.getWindowSize()
+end
