@@ -23,7 +23,10 @@ function TerminalBufferView:render(window)
 
     ---@param row Row
     for i, row in self.buffer.file.rows:iparis() do
-        print(i, row.chars)
+        if i >= window.height then
+            break
+        end
+        
         local chars = row.chars
         local len = #chars
         local finalLen = len > self.width and self.width or len
