@@ -105,8 +105,6 @@ void enableRawMode()
     if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1)
         die("tcgetattr");
 
-    atexit(disableRawMode);
-
     struct termios raw = E.orig_termios;
 
     // 读取终端属性
@@ -1050,8 +1048,11 @@ void editorMoveCursor(int key)
         }
         else
         {
-            E.cy++;
-            E.cx = 0;
+            if (E.cy + 1 < E.numrows)
+            {
+                E.cy++;
+                E.cx = 0;
+            }
         }
         break;
 
@@ -1235,18 +1236,18 @@ int lua_editorProcessKeypress(lua_State *L)
 /**
  * 初始化 Lua
  */
-int initLua()
+int initLua(int argc, char *argv[])
 {
     L = luaL_newstate();
 
     luaL_openlibs(L);
 
-    // 设置 __getWorkDir
     lua_newtable(L);
     lua_setglobal(L, "reditor");
 
     lua_getglobal(L, "reditor");
 
+    // 设置各种辅助函数
     lua_pushcfunction(L, lua_getWorkDir);
     lua_setfield(L, -2, "getWorkDir");
 
@@ -1256,7 +1257,16 @@ int initLua()
     lua_pushcfunction(L, lua_editorProcessKeypress);
     lua_setfield(L, -2, "processKeypress");
 
-    lua_pop(L, 1);
+    // 设置 argv 参数
+    lua_newtable(L);
+    for (int i = 0; i < argc; i++)
+    {
+        lua_pushstring(L, argv[i]);
+        lua_seti(L, -2, i);
+    }
+    lua_setfield(L, -2, "argv");
+
+    lua_pop(L, 1); // pop reditor table
 
     return 0;
 }
@@ -1332,14 +1342,19 @@ int luaMainLoop()
 
 int main(int argc, char *argv[])
 {
+    // 设置退出还原
+    atexit(disableRawMode);
+
+    // 启动 Raw Mode
     enableRawMode();
+
     initEditor();
 
     // 初始化 lua
-    initLua();
+    initLua(argc, argv);
 
-    if (argc >= 2)
-        editorOpen(argv[1]);
+    // if (argc >= 2)
+    //     editorOpen(argv[1]);
 
     editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find");
 
@@ -1347,12 +1362,6 @@ int main(int argc, char *argv[])
     int ret = luaMainLoop();
 
     lua_close(L);
-
-    // while (1)
-    // {
-    //     editorRefreshScreen();
-    //     editorProcessKeypress();
-    // }
 
     return ret;
 }

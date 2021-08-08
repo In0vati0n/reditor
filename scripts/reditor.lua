@@ -18,3 +18,7 @@ end
 ---处理按键
 function reditor.processKeypress()
 end
+
+---程序启动参数
+---@type string[]
+reditor.argv = {}
