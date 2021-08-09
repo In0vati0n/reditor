@@ -36,3 +36,14 @@ end
 ---@return number, number
 function tr.getWindowSize()
 end
+
+---@type _c_input
+reditor.input = {}
+
+---@class _c_input
+input = {}
+
+---@param s number|string
+---@return number
+function input.ctrlKey(s)
+end

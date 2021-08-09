@@ -22,7 +22,7 @@ _G.Class = require("libs.class.30log")
 ---@class Array
 _G.Array = require("libs.array.array")
 
-require('utils.math_utils')
+require("utils.math_utils")
 
 function logError(...)
     logErrorF("%s", table.concat({...}, " "))
@@ -38,7 +38,10 @@ end
 
 --endregion
 
-require("main")
+local ret, _ = xpcall(require, logError, "main")
+if not ret then
+    return
+end
 
 return function()
     local func

@@ -31,6 +31,25 @@ function TerminalWindow:init(editor)
 end
 
 function TerminalWindow:onUpdate()
+    self:_render()
+
+    ---处理输入事件
+    reditor.processKeypress()
+end
+
+---@param chars string
+function TerminalWindow:draw(chars)
+    self._sb:append(chars)
+end
+
+---@param x number
+---@param y number
+function TerminalWindow:setCursorPos(x, y)
+    self._sb:append_format("\x1b[%d;%dH", x, y)
+end
+
+---@private
+function TerminalWindow:_render()
     ---清空屏幕
     self:_clear()
 
@@ -47,20 +66,9 @@ function TerminalWindow:onUpdate()
 
     ---将内容输出到终端
     tr.draw(self._sb:tostring(true))
-
-    ---处理输入事件
-    reditor.processKeypress()
 end
 
----@param chars string
-function TerminalWindow:draw(chars)
-    self._sb:append(chars)
-end
-
----@param x number
----@param y number
-function TerminalWindow:setCursorPos(x, y)
-    self._sb:append_format("\x1b[%d;%dH", x, y)
+function TerminalWindow:_processEvent()
 end
 
 ---@private

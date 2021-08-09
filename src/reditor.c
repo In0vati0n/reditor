@@ -36,6 +36,7 @@
 /*** other include ***/
 
 #include "common.h"
+#include "input.h"
 #include "config.h"
 #include "buf.h"
 #include "render.h"
@@ -1270,6 +1271,9 @@ int initLua(int argc, char *argv[])
     lua_setfield(L, -2, "argv");
 
     lua_pop(L, 1); // pop reditor table
+
+    // 初始化 input 库
+    initInputLib(L);
 
     // 初始化终端渲染库
     initTerminalRenderLib(L);

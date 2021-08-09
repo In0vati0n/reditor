@@ -97,14 +97,14 @@ static int getWindowSize(/* out */ int *rows, /* out */ int *cols)
 
 /*** lua wrapper ***/
 
-int lua_draw(lua_State *L)
+static int lua_draw(lua_State *L)
 {
     const char *content = lua_tostring(L, -1);
     draw(content, strlen(content));
     return 0;
 }
 
-int lua_getWindowSize(lua_State *L)
+static int lua_getWindowSize(lua_State *L)
 {
     int width, height;
     getWindowSize(&height, &width);
