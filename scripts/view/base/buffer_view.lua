@@ -34,4 +34,8 @@ end
 function BufferView:render(window)
 end
 
+---@param key number
+function BufferView:processKey(key)
+end
+
 return BufferView

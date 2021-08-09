@@ -14,7 +14,7 @@
 /**
  * 绘制字符串
  */
-static void draw(const char *chars, int len)
+void tr_draw(const char *chars, int len)
 {
     write(STDOUT_FILENO, chars, len);
 }
@@ -22,7 +22,7 @@ static void draw(const char *chars, int len)
 /**
  * 获取当前光标位置
  */
-static int getCursorPosition(/* out */ int *rows, /* out */ int *cols)
+int tr_getCursorPosition(/* out */ int *rows, /* out */ int *cols)
 {
     char buf[32];
     unsigned int i = 0;
@@ -63,7 +63,7 @@ static int getCursorPosition(/* out */ int *rows, /* out */ int *cols)
 /**
  * 获得当前窗口尺寸
  */
-static int getWindowSize(/* out */ int *rows, /* out */ int *cols)
+int tr_getWindowSize(/* out */ int *rows, /* out */ int *cols)
 {
     struct winsize ws;
 
@@ -85,7 +85,7 @@ static int getWindowSize(/* out */ int *rows, /* out */ int *cols)
         if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12)
             return -1;
 
-        return getCursorPosition(rows, cols);
+        return tr_getCursorPosition(rows, cols);
     }
     else
     {
@@ -100,14 +100,14 @@ static int getWindowSize(/* out */ int *rows, /* out */ int *cols)
 static int lua_draw(lua_State *L)
 {
     const char *content = lua_tostring(L, -1);
-    draw(content, strlen(content));
+    tr_draw(content, strlen(content));
     return 0;
 }
 
 static int lua_getWindowSize(lua_State *L)
 {
     int width, height;
-    getWindowSize(&height, &width);
+    tr_getWindowSize(&height, &width);
 
     lua_pushnumber(L, width);
     lua_pushnumber(L, height);
@@ -115,14 +115,14 @@ static int lua_getWindowSize(lua_State *L)
     return 2;
 }
 
-int initTerminalRenderLib(lua_State *L)
+int tr_initRenderLib(lua_State *L)
 {
     lua_getglobal(L, RE_LUA_GLOBAL_NAME);
 
     lua_newtable(L);
-    lua_setfield(L, -2, "terminal_render");
+    lua_setfield(L, -2, "t_render");
 
-    lua_getfield(L, -1, "terminal_render");
+    lua_getfield(L, -1, "t_render");
 
     lua_pushcfunction(L, lua_draw);
     lua_setfield(L, -2, "draw");
@@ -130,7 +130,7 @@ int initTerminalRenderLib(lua_State *L)
     lua_pushcfunction(L, lua_getWindowSize);
     lua_setfield(L, -2, "getWindowSize");
 
-    lua_pop(L, 1); // pop reditor.terminal_render table
+    lua_pop(L, 1); // pop reditor.t_render table
 
     lua_pop(L, 1); // pop reditor table
     return 0;

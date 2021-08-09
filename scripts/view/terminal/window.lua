@@ -11,7 +11,9 @@ local StringBuilder = require("libs.stringbuilder.stringbuilder")
 ---@class TerminalWindow
 local TerminalWindow = Window:extend("TerminalWindow")
 
-local tr = reditor.terminal_render
+local tr = reditor.t_render
+local ti = reditor.t_input
+local input = reditor.input
 
 ---@param editor Editor
 function TerminalWindow:init(editor)
@@ -25,16 +27,18 @@ function TerminalWindow:init(editor)
     self._sb = StringBuilder()
 
     if editor.currentActiveBuffer then
+        ---@type TerminalBufferView
         self.curtActiveBuffer = TerminalBufferView(editor.currentActiveBuffer, self.width, self.height, 0, 0)
         self.views:add(self.curtActiveBuffer)
     end
 end
 
 function TerminalWindow:onUpdate()
+    ---渲染窗体
     self:_render()
 
     ---处理输入事件
-    reditor.processKeypress()
+    self:_processEvent()
 end
 
 ---@param chars string
@@ -61,14 +65,25 @@ function TerminalWindow:_render()
 
     ---根据当前激活的 buffer 渲染光标位置
     if self.curtActiveBuffer then
-        self:setCursorPos(self.curtActiveBuffer.cursorx, self.curtActiveBuffer.cursory)
+        self:setCursorPos(self.curtActiveBuffer.cursory, self.curtActiveBuffer.cursorx)
     end
 
     ---将内容输出到终端
     tr.draw(self._sb:tostring(true))
 end
 
+---@private
 function TerminalWindow:_processEvent()
+    local key = ti.readKey()
+
+    if key == ti.ctrlKey("q") then
+        reditor.exit(0)
+        return
+    end
+
+    if self.curtActiveBuffer then
+        self.curtActiveBuffer:processKey(key)
+    end
 end
 
 ---@private

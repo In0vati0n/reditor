@@ -8,6 +8,7 @@
 #ifndef __RE_RENDER_H__
 #define __RE_RENDER_H__
 
+#include "common.h"
 #include "config.h"
 #include "buf.h"
 

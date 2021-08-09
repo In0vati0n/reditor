@@ -1,5 +1,5 @@
 /**
- * 终端渲染相关逻辑
+ * 通用函数
  *
  * Author: In0vati0n
  * Date: 2021/08/08
@@ -8,6 +8,7 @@
 #ifndef __RE_COMMON__
 #define __RE_COMMON__
 
+#define RE_VERSION "0.0.2"
 #define RE_LUA_GLOBAL_NAME "reditor"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
@@ -53,5 +54,10 @@
 #else
     #define RE_API extern
 #endif
+
+/**
+ * 终止程序运行，并输出错误信息
+ */
+void die(const char *s);
 
 #endif // __RE_COMMON__

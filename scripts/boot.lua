@@ -38,10 +38,18 @@ end
 
 --endregion
 
-local ret, _ = xpcall(require, logError, "main")
-if not ret then
-    return
+local status, _ = xpcall(require, logError, "main")
+if not status then
+    reditor.die("require main error")
 end
+
+local status, ret = xpcall(require, logError, "config")
+if not status then
+    reditor.die("require config error")
+end
+
+---@type GlobalConfig
+_G.GlobalConfig = ret
 
 return function()
     local func

@@ -11,7 +11,6 @@
 #include <time.h>
 #include <termios.h>
 
-#define RE_VERSION "0.0.2"
 #define RE_TAB_STOP 4
 #define RE_QUIT_TIMES 2
 

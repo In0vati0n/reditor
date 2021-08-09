@@ -28,6 +28,15 @@ enum editorKey
     PAGE_DOWN
 };
 
-RE_API int initInputLib(lua_State *L);
+/**
+ * 读取用户输入
+ * 对 read() 的封装
+ */
+RE_API int ti_editorReadKey();
+
+/**
+ * 初始化终端Lua输入库
+ */
+RE_API int ti_initLib(lua_State *L);
 
 #endif // __RE_INPUT__

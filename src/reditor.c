@@ -74,19 +74,6 @@ int callLua(const char *func_name);
 /*** terminal ***/
 
 /**
- * 终止程序运行，并输出错误信息
- */
-void die(const char *s)
-{
-    // 程序退出时清理屏幕
-    write(STDOUT_FILENO, "\x1b[2J", 4);
-    write(STDOUT_FILENO, "\x1b[H", 3);
-
-    perror(s);
-    exit(1);
-}
-
-/**
  * 还原终端配置
  */
 void disableRawMode()
@@ -159,177 +146,6 @@ void enableRawMode()
     // 设置终端属性
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1)
         die("tcsetattr");
-}
-
-/**
- * 读取用户输入
- * 对 read() 的封装
- */
-int editorReadKey()
-{
-    int nread;
-    char c;
-    while ((nread = read(STDIN_FILENO, &c, 1)) != 1)
-    {
-        if (nread == -1 && errno != EAGAIN)
-            die("read");
-    }
-
-    /**
-     * 由于方向键输入会转换成 <esc>[x 的形式
-     * PAGEUP PAGEDOWN 会转换成 <ecs>[5~ <ecs>[6~
-     * 这里特殊处理一下
-     */
-    if (c == '\x1b')
-    {
-        char seq[3];
-
-        if (read(STDIN_FILENO, &seq[0], 1) != 1)
-            return '\x1b';
-        if (read(STDIN_FILENO, &seq[1], 1) != 1)
-            return '\x1b';
-
-        if (seq[0] == '[')
-        {
-            // 检查第二个参数是否为数字
-            if (seq[1] >= '0' && seq[1] <= '9')
-            {
-                if (read(STDIN_FILENO, &seq[2], 1) != 1)
-                    return '\x1b';
-
-                if (seq[2] == '~')
-                {
-                    switch (seq[1])
-                    {
-                    case '1':
-                        return HOME_KEY;
-                    case '3':
-                        return DEL_KEY;
-                    case '4':
-                        return END_KEY;
-                    case '5':
-                        return PAGE_UP;
-                    case '6':
-                        return PAGE_DOWN;
-                    case '7':
-                        return HOME_KEY;
-                    case '8':
-                        return END_KEY;
-                    }
-                }
-            }
-            else
-            {
-                switch (seq[1])
-                {
-                case 'A':
-                    return ARROW_UP;
-                case 'B':
-                    return ARROW_DOWN;
-                case 'C':
-                    return ARROW_RIGHT;
-                case 'D':
-                    return ARROW_LEFT;
-                case 'H':
-                    return HOME_KEY;
-                case 'F':
-                    return END_KEY;
-                }
-            }
-        }
-        else if (seq[0] == 'O')
-        {
-            switch (seq[1])
-            {
-            case 'H':
-                return HOME_KEY;
-            case 'F':
-                return END_KEY;
-            }
-        }
-
-        return '\x1b';
-    }
-    else
-    {
-        return c;
-    }
-}
-
-/**
- * 获取当前光标位置
- */
-int getCursorPosition(/* out */ int *rows, /* out */ int *cols)
-{
-    char buf[32];
-    unsigned int i = 0;
-
-    /**
-     * 使用 n 命令获取当前命令行状态
-     * 参看：http://vt100.net/docs/vt100-ug/chapter3.html#DSR
-     *
-     * 输出结果为一个转义序列
-     * 形如 <ecs>[24;80R
-     * 参看：http://vt100.net/docs/vt100-ug/chapter3.html#CPR
-     */
-    if (write(STDOUT_FILENO, "\x1b[6n", 4) != 4)
-        return -1;
-
-    while (i < sizeof(buf) - 1)
-    {
-        if (read(STDIN_FILENO, &buf[i], 1) != 1)
-            break;
-        // 判断输入是否结束
-        if (buf[i] == 'R')
-            break;
-        i++;
-    }
-    buf[i] = '\0';
-
-    // 检查是否有错误
-    if (buf[0] != '\x1b' || buf[1] != '[')
-        return -1;
-
-    // 读取行、列数据
-    if (sscanf(&buf[2], "%d;%d", rows, cols) != 2)
-        return -1;
-
-    return 0;
-}
-
-/**
- * 获得当前窗口尺寸
- */
-int getWindowSize(/* out */ int *rows, /* out */ int *cols)
-{
-    struct winsize ws;
-
-    // 尝试通过 ioctl 获取当前终端尺寸
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)
-    {
-        /**
-         * 保底策略，将光标位置放置到右下角
-         * 再通过查询当前光标位置来获取信息
-         * 其中
-         * - C：将光标移动到右侧 
-         *      http://vt100.net/docs/vt100-ug/chapter3.html#CUF
-         * - B：将光标移动到底部
-         *      http://vt100.net/docs/vt100-ug/chapter3.html#CUD
-         * - 999：保证光标能移动到右下角
-         * 使用 C、B 命令能保证光标不会移动到屏幕边界外
-         * 而 H 命令有可能将光标移动出去
-         */
-        if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12)
-            return -1;
-
-        return getCursorPosition(rows, cols);
-    }
-    else
-    {
-        *cols = ws.ws_col;
-        *rows = ws.ws_row;
-        return 0;
-    }
 }
 
 /*** syntax highlighting ***/
@@ -983,7 +799,7 @@ char *editorPrompt(char *prompt, void (*callback)(char *, int))
         editorSetStatusMessage(prompt, buf);
         editorRefreshScreen();
 
-        int c = editorReadKey();
+        int c = ti_editorReadKey();
         if (c == DEL_KEY || c == CTRL_KEY('h') || c == BACKSPACE)
         {
             if (buflen != 0)
@@ -1085,7 +901,7 @@ void editorProcessKeypress()
 {
     static int quit_times = RE_QUIT_TIMES;
 
-    int c = editorReadKey();
+    int c = ti_editorReadKey();
 
     switch (c)
     {
@@ -1197,8 +1013,8 @@ void initEditor()
     E.syntax = NULL;
 
     // 得到终端尺寸
-    if (getWindowSize(&E.screenrows, &E.screencols) == -1)
-        die("getWindowSize");
+    if (tr_getWindowSize(&E.screenrows, &E.screencols) == -1)
+        die("tr_getWindowSize");
 
     // 一行留给状态栏
     // 一行留给消息栏
@@ -1237,6 +1053,18 @@ int lua_editorProcessKeypress(lua_State *L)
     return 0;
 }
 
+int lua_die(lua_State *L)
+{
+    die(lua_tostring(L, -1));
+    return 0;
+}
+
+int lua_exit(lua_State *L)
+{
+    exit(lua_tonumber(L, -1));
+    return 0;
+}
+
 /**
  * 初始化 Lua
  */
@@ -1261,6 +1089,12 @@ int initLua(int argc, char *argv[])
     lua_pushcfunction(L, lua_editorProcessKeypress);
     lua_setfield(L, -2, "processKeypress");
 
+    lua_pushcfunction(L, lua_die);
+    lua_setfield(L, -2, "die");
+
+    lua_pushcfunction(L, lua_exit);
+    lua_setfield(L, -2, "exit");
+
     // 设置 argv 参数
     lua_newtable(L);
     for (int i = 0; i < argc; i++)
@@ -1273,10 +1107,10 @@ int initLua(int argc, char *argv[])
     lua_pop(L, 1); // pop reditor table
 
     // 初始化 input 库
-    initInputLib(L);
+    ti_initLib(L);
 
     // 初始化终端渲染库
-    initTerminalRenderLib(L);
+    tr_initRenderLib(L);
 
     return 0;
 }

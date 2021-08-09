@@ -12,6 +12,24 @@
 
 #include "common.h"
 
-RE_API int initTerminalRenderLib(lua_State *L);
+/**
+ * 终端渲染
+ */
+RE_API void tr_draw(const char *chars, int len);
+
+/**
+ * 获取当前光标位置
+ */
+RE_API int tr_getCursorPosition(/* out */ int *rows, /* out */ int *cols);
+
+/**
+ * 获得当前窗口尺寸
+ */
+RE_API int tr_getWindowSize(/* out */ int *rows, /* out */ int *cols);
+
+/**
+ * 初始化终端 Lua 渲染库
+ */
+RE_API int tr_initRenderLib(lua_State *L);
 
 #endif // __RE_TERMINAL_RENDER__
