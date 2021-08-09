@@ -21,22 +21,33 @@ end
 function TerminalBufferView:render(window)
     window:setCursorPos(self.posx, self.posy)
 
-    ---@param row Row
-    for i, row in self.buffer.file.rows:iparis() do
-        if i >= window.height then
-            break
-        end
-        
-        local chars = row.chars
-        local len = #chars
-        local finalLen = len > self.width and self.width or len
-        if finalLen ~= len then
-            window:draw(chars:sub(0, finalLen))
+    local rows = self.buffer.file.rows
+    local filerow = 0
+    local maxwidth = math.numberOfDigits(rows:size())
+
+    for i = 1, window.height do
+        filerow = i + self.offsety
+
+        if filerow > rows:size() then
+            window:draw(string.format("%" .. maxwidth .. "d", filerow))
         else
-            window:draw(chars)
+            local row = rows:get(filerow)
+            local chars = row.chars
+            local len = #chars
+            local finalLen = len > self.width - maxwidth - 2 and self.width - maxwidth - 2 or len
+
+            window:draw(string.format("%" .. maxwidth .. "d  ", filerow))
+
+            if finalLen ~= len then
+                window:draw(chars:sub(0, finalLen))
+            else
+                window:draw(chars)
+            end
         end
 
-        window:draw("\r\n")
+        if i < window.height then
+            window:draw("\r\n")
+        end
     end
 end
 

@@ -25,20 +25,30 @@ function TerminalWindow:init(editor)
     self._sb = StringBuilder()
 
     if editor.currentActiveBuffer then
-        self.views:add(TerminalBufferView(editor.currentActiveBuffer, self.width, self.height, 0, 0))
+        self.curtActiveBuffer = TerminalBufferView(editor.currentActiveBuffer, self.width, self.height, 0, 0)
+        self.views:add(self.curtActiveBuffer)
     end
 end
 
 function TerminalWindow:onUpdate()
+    ---清空屏幕
     self:_clear()
 
+    ---渲染每一个显示的buffer
     ---@param view TerminalBufferView
     for i, view in self.views:iparis() do
         view:render(self)
     end
 
+    ---根据当前激活的 buffer 渲染光标位置
+    if self.curtActiveBuffer then
+        self:setCursorPos(self.curtActiveBuffer.cursorx, self.curtActiveBuffer.cursory)
+    end
+
+    ---将内容输出到终端
     tr.draw(self._sb:tostring(true))
 
+    ---处理输入事件
     reditor.processKeypress()
 end
 

@@ -13,12 +13,21 @@ local BufferView = Class("BufferView")
 ---@param height number
 ---@param posx number
 ---@param posy number
-function BufferView:init(buffer, width, height, posx, posy)
+---@param cursorx number
+---@param cursory number
+function BufferView:init(buffer, width, height, posx, posy, cursorx, cursory)
+    cursorx = cursorx or 0
+    cursory = cursory or 0
+
     self.buffer = buffer
     self.width = width
     self.height = height
     self.posx = posx
     self.posy = posy
+    self.cursorx = 0
+    self.cursory = 0
+    self.offsetx = 0
+    self.offsety = 0
 end
 
 ---@param window Window

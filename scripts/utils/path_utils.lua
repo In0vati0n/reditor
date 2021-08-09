@@ -1,3 +1,10 @@
+--[[
+    路径辅助方法
+
+    @Author In0vati0n
+    @Date 2021/08/09
+--]]
+
 ---@class PathUtils
 local PathUtils = {}
 

@@ -22,6 +22,8 @@ _G.Class = require("libs.class.30log")
 ---@class Array
 _G.Array = require("libs.array.array")
 
+require('utils.math_utils')
+
 function logError(...)
     logErrorF("%s", table.concat({...}, " "))
 end
