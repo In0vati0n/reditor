@@ -5,15 +5,16 @@
     @Date 2021/08/08
 --]]
 local Window = require("view.base.window")
+local BufferView = require("view.base.buffer_view")
 local TerminalBufferView = require("view.terminal.buffer_view")
 local StringBuilder = require("libs.stringbuilder.stringbuilder")
+local NormalMode = require("mode.normal")
 
 ---@class TerminalWindow
 local TerminalWindow = Window:extend("TerminalWindow")
 
 local tr = reditor.t_render
-local ti = reditor.t_input
-local input = reditor.input
+local tinput = reditor.t_input
 
 ---@param editor Editor
 function TerminalWindow:init(editor)
@@ -28,7 +29,8 @@ function TerminalWindow:init(editor)
 
     if editor.currentActiveBuffer then
         ---@type TerminalBufferView
-        self.curtActiveBuffer = TerminalBufferView(editor.currentActiveBuffer, self.width, self.height, 0, 0)
+        self.curtActiveBuffer =
+            BufferView.create(TerminalBufferView, NormalMode, editor.currentActiveBuffer, self.width, self.height, 0, 0)
         self.views:add(self.curtActiveBuffer)
     end
 end
@@ -74,12 +76,7 @@ end
 
 ---@private
 function TerminalWindow:_processEvent()
-    local key = ti.readKey()
-
-    if key == ti.ctrlKey("q") then
-        reditor.exit(0)
-        return
-    end
+    local key = tinput.readKey()
 
     if self.curtActiveBuffer then
         self.curtActiveBuffer:processKey(key)

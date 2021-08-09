@@ -15,8 +15,8 @@ local input = reditor.input
 ---@param window Window
 ---@param width number
 ---@param height number
-function TerminalBufferView:init(buffer, width, height, posx, posy)
-    BufferView.init(self, buffer, width, height, posx, posy)
+function TerminalBufferView:init(buffer, width, height, posx, posy, mode, cursorx, cursory)
+    BufferView.init(self, buffer, width, height, posx, posy, mode, cursorx, cursory)
 end
 
 ---@param window TerminalWindow
@@ -25,7 +25,7 @@ function TerminalBufferView:render(window)
 
     local rows = self.buffer.file.rows
     local filerow = 0
-    local maxwidth = math.numberOfDigits(rows:size())
+    local maxwidth = rows:size() == 0 and math.numberOfDigits(window.height) or math.numberOfDigits(rows:size())
 
     for i = 1, window.height do
         filerow = i + self.offsety
@@ -66,9 +66,7 @@ end
 
 ---@param key number
 function TerminalBufferView:processKey(key)
-    if key == input.ARROW_DOWN then
-        self.cursory = self.cursory + 1
-    end
+    BufferView.processKey(self, key)
 end
 
 return TerminalBufferView

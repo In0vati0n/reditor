@@ -1061,6 +1061,10 @@ int lua_die(lua_State *L)
 
 int lua_exit(lua_State *L)
 {
+    // 程序退出时清理屏幕
+    write(STDOUT_FILENO, "\x1b[2J", 4);
+    write(STDOUT_FILENO, "\x1b[H", 3);
+
     exit(lua_tonumber(L, -1));
     return 0;
 }
