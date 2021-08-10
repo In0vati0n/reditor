@@ -81,4 +81,9 @@ function NormalMode:processKey(key)
     end
 end
 
+---@return string
+function NormalMode:getName()
+    return "Normal"
+end
+
 return NormalMode

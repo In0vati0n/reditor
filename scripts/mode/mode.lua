@@ -24,4 +24,8 @@ end
 function Mode:processKey(key)
 end
 
+---@return string
+function Mode:getName()
+end
+
 return Mode

@@ -51,7 +51,7 @@ end
 ---@param x number
 ---@param y number
 function TerminalWindow:setCursorPos(x, y)
-    self._sb:append_format("\x1b[%d;%dH", x, y)
+    self._sb:append_format("\x1b[%d;%dH", y, x)
 end
 
 ---@private
@@ -67,7 +67,7 @@ function TerminalWindow:_render()
 
     ---根据当前激活的 buffer 渲染光标位置
     if self.curtActiveBuffer then
-        self:setCursorPos(self.curtActiveBuffer.cursory, self.curtActiveBuffer.cursorx)
+        self:setCursorPos(self.curtActiveBuffer.cursorx, self.curtActiveBuffer.cursory)
     end
 
     ---将内容输出到终端
