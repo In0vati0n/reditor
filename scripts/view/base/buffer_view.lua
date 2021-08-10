@@ -47,8 +47,6 @@ function BufferView:init(buffer, width, height, posx, posy, cursorx, cursory)
     self.posy = posy
     self.cursorx = 0
     self.cursory = 0
-    self.offsetx = 0
-    self.offsety = 0
 
     ---@type Mode
     self.mode = nil

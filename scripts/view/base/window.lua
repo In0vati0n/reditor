@@ -15,4 +15,8 @@ end
 function Window:onUpdate()
 end
 
+---@param chars string
+function Window:draw(chars)
+end
+
 return Window
