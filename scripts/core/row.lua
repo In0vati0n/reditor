@@ -17,4 +17,9 @@ function Row:init(chars)
     self.render = ""
 end
 
+---@return number
+function Row:length()
+    return self.chars and #self.chars or 0
+end
+
 return Row

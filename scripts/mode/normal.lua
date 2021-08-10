@@ -75,9 +75,13 @@ function NormalMode:processKey(key)
     end
 
     if key == input.ARROW_DOWN then
-        self.bufferView.cursory = self.bufferView.cursory + 1
+        self.bufferView:moveCursor(0, 1)
     elseif key == input.ARROW_UP then
-        self.bufferView.cursory = self.bufferView.cursory - 1
+        self.bufferView:moveCursor(0, -1)
+    elseif key == input.ARROW_RIGHT then
+        self.bufferView:moveCursor(1, 0)
+    elseif key == input.ARROW_LEFT then
+        self.bufferView:moveCursor(-1, 0)
     end
 end
 
