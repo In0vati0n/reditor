@@ -30,7 +30,16 @@ function TerminalWindow:init(editor)
     if editor.currentActiveBuffer then
         ---@type TerminalBufferView
         self.curtActiveBuffer =
-            BufferView.create(TerminalBufferView, NormalMode, editor.currentActiveBuffer, self.width, self.height, 0, 0)
+            BufferView.create(
+            TerminalBufferView,
+            NormalMode,
+            self,
+            editor.currentActiveBuffer,
+            self.width,
+            self.height,
+            0,
+            0
+        )
         self.views:add(self.curtActiveBuffer)
     end
 end
@@ -62,12 +71,13 @@ function TerminalWindow:_render()
     ---渲染每一个显示的buffer
     ---@param view TerminalBufferView
     for i, view in self.views:iparis() do
-        view:render(self)
+        view:render()
     end
 
     ---根据当前激活的 buffer 渲染光标位置
     if self.curtActiveBuffer then
-        self:setCursorPos(self.curtActiveBuffer.cursorx, self.curtActiveBuffer.cursory)
+        local buffer = self.curtActiveBuffer
+        self:setCursorPos(buffer.editRect.x + buffer.cursorx, buffer.editRect.y + buffer.cursory - buffer.offsety)
     end
 
     ---将内容输出到终端

@@ -12,12 +12,7 @@ function Mode:init(bufferView)
     self.bufferView = bufferView
 end
 
----@param x number
----@param y number
----@param width number
----@param height number
----@param window Window
-function Mode:render(x, y, width, height, window)
+function Mode:render()
 end
 
 ---@param key number

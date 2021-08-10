@@ -19,4 +19,9 @@ end
 function Window:draw(chars)
 end
 
+---@param x number
+---@param y number
+function Window:setCursorPos(x, y)
+end
+
 return Window

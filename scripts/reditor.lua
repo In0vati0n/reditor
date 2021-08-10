@@ -108,3 +108,13 @@ end
 ---@return number
 function t_input.readKey()
 end
+
+--------------------------------------------
+---REditor base type
+--------------------------------------------
+---@class Rect
+---@field x number
+---@field y number
+---@field width number
+---@field height number
+local rect = {}

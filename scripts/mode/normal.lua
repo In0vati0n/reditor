@@ -5,6 +5,7 @@
     @Date 2021/08/09
 --]]
 local Mode = require("mode.mode")
+local StringBuilder = require("libs.stringbuilder.stringbuilder")
 
 local input = reditor.input
 local tinput = reditor.t_input
@@ -12,57 +13,44 @@ local tinput = reditor.t_input
 ---@class NormalMode : Mode
 local NormalMode = Mode:extend("NormalMode")
 
+local maxwidth = 0
+local sb = StringBuilder()
+
 ---@param bufferView BufferView
 function NormalMode:init(bufferView)
     Mode.init(self, bufferView)
 
-    self.offsetx = 0
-    self.offsety = 0
+    local rows = self.bufferView.buffer.file.rows
+    maxwidth = rows:size() == 0 and math.numberOfDigits(bufferView.height) or math.numberOfDigits(rows:size())
+    bufferView:setEditRect(maxwidth + 1, 0, bufferView.width - maxwidth - 1, bufferView.height)
 end
 
----@param x number
----@param y number
----@param width number
----@param height number
----@param window Window
-function NormalMode:render(x, y, width, height, window)
+function NormalMode:render()
+    local view = self.bufferView
     local rows = self.bufferView.buffer.file.rows
     local filerow = 0
-    local maxwidth = rows:size() == 0 and math.numberOfDigits(window.height) or math.numberOfDigits(rows:size())
 
-    for i = 1, height do
-        filerow = i + self.offsety
+    for i = 1, view.editRect.height do
+        filerow = i + view.offsety
+
+        self.bufferView:drawNoneditableLine(i, string.format("%" .. maxwidth .. "d", filerow))
 
         if filerow > rows:size() then
-            window:draw(string.format("%" .. maxwidth .. "d", filerow))
-
-            if rows:size() == 0 and filerow == math.floor(height / 3) then
+            if rows:size() == 0 and filerow == math.floor(view.editRect.height / 3) then
                 local welcome = string.format("~ %s %s ~", _G.GlobalConfig.welcomeLabel, _G.GlobalConfig.version)
-                local padding = (window.width - #welcome) / 2
+                local padding = (view.editRect.width - #welcome) / 2
                 padding = padding - #string.format("%" .. maxwidth .. "d", filerow)
                 while padding > 0 do
-                    window:draw(" ")
+                    sb:append(" ")
                     padding = padding - 1
                 end
-                window:draw(welcome)
+                sb:append(welcome)
+                view:drawLine(i, sb:tostring(true))
             end
         else
+            ---@type Row
             local row = rows:get(filerow)
-            local chars = row.chars
-            local len = #chars
-            local finalLen = len > width - maxwidth - 2 and width - maxwidth - 2 or len
-
-            window:draw(string.format("%" .. maxwidth .. "d  ", filerow))
-
-            if finalLen ~= len then
-                window:draw(chars:sub(0, finalLen))
-            else
-                window:draw(chars)
-            end
-        end
-
-        if i < window.height then
-            window:draw("\r\n")
+            view:drawLine(i, row.chars)
         end
     end
 end

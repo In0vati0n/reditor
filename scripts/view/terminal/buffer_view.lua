@@ -11,30 +11,33 @@ local TerminalBufferView = BufferView:extend("TerminalBufferView")
 
 local input = reditor.input
 
+---@param window Window
 ---@param buffer Buffer
 ---@param window Window
 ---@param width number
 ---@param height number
-function TerminalBufferView:init(buffer, width, height, posx, posy, mode, cursorx, cursory)
-    BufferView.init(self, buffer, width, height, posx, posy, mode, cursorx, cursory)
+---@param posx number
+---@param posy number
+---@param mode Mode
+---@param cursorx number|nil
+---@param cursory number|nil
+function TerminalBufferView:init(window, buffer, width, height, posx, posy, mode, cursorx, cursory)
+    BufferView.init(self, window, buffer, width, height, posx, posy, mode, cursorx, cursory)
 
     self.msg = "Ctrl - Q QUIT"
 end
 
----@param window TerminalWindow
-function TerminalBufferView:render(window)
-    window:setCursorPos(self.posx, self.posy)
-
+function TerminalBufferView:render()
     ---渲染内容
     ---留出两行，一行给状态栏，一行给信息栏
-    local contentHeight = window.height - 2
-    self.mode:render(self.posx, self.posy, self.width, contentHeight, window)
+    local contentHeight = self.height - 2
+    self.mode:render()
 
     ---渲染状态栏
-    self:_drawStatusBar(window, self.posx, self.posy + contentHeight + 1)
+    self:_drawStatusBar(self.posx, self.posy + contentHeight + 1)
 
     ---渲染信息栏
-    self:_drawMessageBar(window, self.posx, self.posy + contentHeight + 2)
+    self:_drawMessageBar(self.posx, self.posy + contentHeight + 2)
 end
 
 ---@param key number
@@ -44,29 +47,29 @@ end
 
 ---@private
 ---@param window Window
-function TerminalBufferView:_drawStatusBar(window, posx, posy)
+function TerminalBufferView:_drawStatusBar(posx, posy)
     local leftHint = string.format("- [%s]", self.mode:getName())
     local rightHint = ""
 
     local whiteCnt = self.width - #leftHint - #rightHint
 
-    window:setCursorPos(posx, posy)
-    window:draw("\x1b[7m")
-    window:draw(leftHint)
+    self.window:setCursorPos(posx, posy)
+    self.window:draw("\x1b[7m")
+    self.window:draw(leftHint)
     while whiteCnt > 0 do
-        window:draw(" ")
+        self.window:draw(" ")
         whiteCnt = whiteCnt - 1
     end
-    window:draw(rightHint)
-    window:draw("\x1b[m")
+    self.window:draw(rightHint)
+    self.window:draw("\x1b[m")
 end
 
 ---@private
 ---@param window Window
-function TerminalBufferView:_drawMessageBar(window, posx, posy)
-    window:setCursorPos(posx, posy)
-    window:draw("  ")
-    window:draw(self.msg)
+function TerminalBufferView:_drawMessageBar(posx, posy)
+    self.window:setCursorPos(posx, posy)
+    self.window:draw("  ")
+    self.window:draw(self.msg)
 end
 
 return TerminalBufferView
