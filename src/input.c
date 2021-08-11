@@ -107,19 +107,19 @@ int ti_editorReadKey()
 
 static int lua_ctrlKey(lua_State *L)
 {
-    if (lua_isnumber(L, -1))
+    if (lua_isnumber(L, 1))
     {
-        int key = lua_tonumber(L, -1);
+        int key = lua_tonumber(L, 1);
         lua_pushnumber(L, CTRL_KEY(key));
     }
-    else if (lua_isstring(L, -1))
+    else if (lua_isstring(L, 1))
     {
-        const char *c = lua_tostring(L, -1);
+        const char *c = lua_tostring(L, 1);
         lua_pushnumber(L, CTRL_KEY(*c));
     }
     else
     {
-        luaL_typeerror(L, 0, "number or string");
+        luaL_typeerror(L, 1, "number or string");
         return 0;
     }
 

@@ -1055,7 +1055,7 @@ int lua_editorProcessKeypress(lua_State *L)
 
 int lua_die(lua_State *L)
 {
-    die(lua_tostring(L, -1));
+    die(lua_tostring(L, 1));
     return 0;
 }
 
@@ -1065,7 +1065,7 @@ int lua_exit(lua_State *L)
     write(STDOUT_FILENO, "\x1b[2J", 4);
     write(STDOUT_FILENO, "\x1b[H", 3);
 
-    exit(lua_tonumber(L, -1));
+    exit(lua_tonumber(L, 1));
     return 0;
 }
 
@@ -1114,7 +1114,7 @@ int initLua(int argc, char *argv[])
     ti_initLib(L);
 
     // 初始化终端渲染库
-    tr_initRenderLib(L);
+    tr_initLib(L);
 
     return 0;
 }

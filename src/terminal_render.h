@@ -30,6 +30,6 @@ RE_API int tr_getWindowSize(/* out */ int *rows, /* out */ int *cols);
 /**
  * 初始化终端 Lua 渲染库
  */
-RE_API int tr_initRenderLib(lua_State *L);
+RE_API int tr_initLib(lua_State *L);
 
 #endif // __RE_TERMINAL_RENDER__

@@ -99,7 +99,7 @@ int tr_getWindowSize(/* out */ int *rows, /* out */ int *cols)
 
 static int lua_draw(lua_State *L)
 {
-    const char *content = lua_tostring(L, -1);
+    const char *content = lua_tostring(L, 1);
     tr_draw(content, strlen(content));
     return 0;
 }
@@ -115,7 +115,7 @@ static int lua_getWindowSize(lua_State *L)
     return 2;
 }
 
-int tr_initRenderLib(lua_State *L)
+int tr_initLib(lua_State *L)
 {
     lua_getglobal(L, RE_LUA_GLOBAL_NAME);
 
