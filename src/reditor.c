@@ -1041,18 +1041,6 @@ int lua_getWorkDir(lua_State *L)
     return 0;
 }
 
-int lua_editorRefreshScreen(lua_State *L)
-{
-    editorRefreshScreen();
-    return 0;
-}
-
-int lua_editorProcessKeypress(lua_State *L)
-{
-    editorProcessKeypress();
-    return 0;
-}
-
 int lua_die(lua_State *L)
 {
     die(lua_tostring(L, 1));
@@ -1086,12 +1074,6 @@ int initLua(int argc, char *argv[])
     // 设置各种辅助函数
     lua_pushcfunction(L, lua_getWorkDir);
     lua_setfield(L, -2, "getWorkDir");
-
-    lua_pushcfunction(L, lua_editorRefreshScreen);
-    lua_setfield(L, -2, "refreshScreen");
-
-    lua_pushcfunction(L, lua_editorProcessKeypress);
-    lua_setfield(L, -2, "processKeypress");
 
     lua_pushcfunction(L, lua_die);
     lua_setfield(L, -2, "die");
